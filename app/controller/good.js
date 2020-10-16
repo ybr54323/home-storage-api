@@ -1,15 +1,7 @@
-/*
- * @Author: your name
- * @Date: 2020-06-24 15:11:17
- * @LastEditTime: 2020-06-24 17:30:52
- * @LastEditors: Please set LastEditors
- * @Description: In User Settings Edit
- * @FilePath: \family-kit-api\app\controller\good.js
- */
 'use strict'
-const {Controller} = require('egg')
+const BaseController = require('./baseController')
 
-class GoodController extends Controller {
+class GoodController extends BaseController {
   async index() {
   }
 
@@ -55,7 +47,7 @@ class GoodController extends Controller {
         })
       })
     }
-    this.app.success({
+    this.success({
       msg: '创建成功',
       loggerMsg: `[创建物品成功]\n user_id: ${this.ctx.session.userInfo.id}\n good_id: ${id}`
     })

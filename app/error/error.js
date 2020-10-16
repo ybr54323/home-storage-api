@@ -19,12 +19,13 @@ class NoLoginError extends HError {
 }
 
 class UnExpectError extends HError {
-  constructor(params = {errCode: 408, msg: '??', loggerMsg: ''}) {
+  constructor(params = {errCode: 408, msg: '未知错误', loggerMsg: ''}) {
     super(params);
   }
 }
 
 module.exports = {
   ParamsError,
-  NoLoginError
+  NoLoginError,
+  UnExpectError
 }

@@ -1,11 +1,3 @@
-/*
- * @Author: your name
- * @Date: 2020-06-23 16:03:14
- * @LastEditTime: 2020-06-24 15:02:29
- * @LastEditors: Please set LastEditors
- * @Description: In User Settings Edit
- * @FilePath: \family-kit-api\app\service\user.js
- */
 'use strict'
 const Service = require('egg').Service;
 
@@ -45,7 +37,7 @@ class UserService extends Service {
   async search(userDTO) {
     let query =
       `
-      select u.id, u.name, u_a.url as avatar,
+      select u.id, u.name, u_a.url as avatar
       from user as u 
       join user_avatar as u_a on u.id = u_a.user_id and u_a.is_active = 1 
       where
@@ -73,7 +65,18 @@ class UserService extends Service {
         name
       }
     )
-
+  }
+  async searchByPhone(phone) {
+    return await this.app.mysql.query(
+      `
+      select u.id, u.name
+      from user as u
+      join user_avatar as u_a on u.id = u_a.user_id and u_a.is_active = 1
+      where u.phone = :phone and is_delete = 0
+      `, {
+        phone
+      }
+    )
   }
 }
 

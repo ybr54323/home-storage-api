@@ -7,19 +7,36 @@ class MessageService extends Service {
   // 发起人和接收人
   async getChatMessage(user_id) {
 
-    const allChatMessage = await this.app.mysql.query(
+    const allMessage = await this.app.mysql.query(
       `
       select *
-      from message where source_user_id = :user_id or target_user_id = :user_id and is_delete = 0
+      from message where 
+      (type = 1 and (source_user_id = :user_id or target_user_id = :user_id) and source_user_delete = 0 and target_user_delete = 0)
+      or
+      ((type = 2 or type = 3) and (target_user_id = :user_id) and target_user_delete = 0)
+      and is_delete = 0
+       limit 100
       `, {
         user_id
       }
     )
-    // 查出非当前用户的用户的信息
-    const otherUserIds = new Set()
-    allChatMessage.forEach(cM => {
-      cM.source_user_id === user_id ? otherUserIds.add(cM.target_user_id) : otherUserIds.add(cM.source_user_id)
-    })
+
+    // 聊天信息
+    const chatMessage = [],
+      friendMessage = [],
+      groupMessage = [],
+      cMOtherUserIds = new Set(),
+      fMOtherUserIds = new Set(),
+      gMOtherUserIds = new Set()
+
+    // 分类
+    for (let i = 0; i < allMessage; i++) {
+      const m = allMessage[i]
+      const [res, userIds] = m.type === 1 ? [chatMessage, cMOtherUserIds] : m.type === 2 ? [friendMessage, fMOtherUserIds] : [groupMessage, gMOtherUserIds]
+      res.push(m) && user_id !== m.id && !userIds.has(m.id) && userIds.add(m.id)
+    }
+
+    // 找出所有消息涉及的非当前用户的基础信息
 
     const otherUsers = await this.app.mysql.query(
       `
@@ -28,23 +45,40 @@ class MessageService extends Service {
       join user_avatar as u_a on u_a.user_id = u.id and u_a.is_active = 1 and u_a.is_delete = 0
       where u.id in (:otherUserIds)
       `, {
-        otherUserIds
+        otherUserIds: [...new Set([...cMOtherUserIds, ...fMOtherUserIds, ...gMOtherUserIds])]
       }
     )
 
-    allChatMessage.forEach(cM => {
-      for (let i = 0; i < otherUsers.length; i++) {
+    for (let i = 0; i < allMessage.length; i++) {
+      const m = allMessage[i]
+      for (let j = 0; j < otherUsers.length; j++) {
         const u = otherUsers[i]
-        if (cM.source_user_id === u.id) {
-          cM.source_user = u
-          break
-        } else if (cM.target_user_id === u.id) {
-          cM.target_user = u
-          break
+        if (m.type === 1) {
+          if (m.source_user_id === user_id) {
+            m.target_user_name = u.name
+            m.target_user_avatar = u.avatar || null
+            break
+          }
+          if (m.target_user_id === user_id) {
+            m.source_user_name = u.name
+            m.source_user_avatar = u.avatar || null
+            break
+          }
+        } else {
+          if (m.source_user_id === u.id) {
+            m.source_user_name = u.name
+            m.source_user_avatar = u.avatar
+            break
+          }
         }
       }
-    })
-    return allChatMessage
+    }
+
+    return {
+      chatMessage,
+      friendMessage,
+      groupMessage
+    }
   }
 
   // “读”消息

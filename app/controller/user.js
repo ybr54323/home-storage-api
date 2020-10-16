@@ -8,10 +8,10 @@
  */
 'use strict'
 const {generateCode, getDate} = require('../util/index')
-const {ParamsError, NoLoginError} = require('../error/error')
-const {Controller} = require('egg')
+const {ParamsError, NoLoginError, UnExpectError} = require('../error/error')
+const BaseController = require('./baseController')
 
-class UserController extends Controller {
+class UserController extends BaseController {
 
   // 验证短信验证码
   // 同时验证手机号码和验证码
@@ -40,9 +40,17 @@ class UserController extends Controller {
     // 初始化榛子云sms
     const ZhenzismsClient = require('../util/zhenzisms')
     const client = new ZhenzismsClient('sms_developer.zhenzikj.com', app_id, app_secret)
-    const res = await client.send({templateId: '895', number: phone, templateParams: [code, '5分钟']})
+    // const {code: zhenziCode, data} = await client.send({
+    //   templateId: '895',
+    //   number: phone,
+    //   templateParams: [code, '5分钟']
+    // })
+    // if (zhenziCode !== 0)
+    //   throw new UnExpectError({
+    //     msg: data,
+    //     loggerMsg: `[榛子云短信发送失败]{code}: ${zhenziCode} {data}: ${data}`
+    //   })
     return {
-      ...res,
       code,
       phone
     }
@@ -52,14 +60,14 @@ class UserController extends Controller {
   // 注册 / 登录-短信验证码
   async registerOrLoginCode() {
     const {code, phone} = await this.gCode()
-    const [user = null] = await this.ctx.service.user.searchUserByPhone(phone)
+    const [user = null] = await this.ctx.service.user.search({phone})
     this.ctx.session.userInfo = user ? {...user, isNewUser: false} : {isNewUser: true} // no user so it is a new user
     this.ctx.session.zhenziData = {
       phone,
       code
     }
-    this.app.success({
-      code: this.app.SUCCESS_CODE,
+    this.success({
+      code: this.success_CODE,
       msg: `验证码发送成功`,
       loggerMsg: `[登录/注册][验证码发送] {phone}: ${phone} {code}: ${code}`
     })
@@ -77,13 +85,13 @@ class UserController extends Controller {
     const {ctx: {session: {userInfo}}} = this
     if (!userInfo.isNewUser) {
       const {id, name, avatar} = userInfo
-      this.app.success({
+      this.success({
         data: {user: {id, name, avatar}},
         msg: '登录成功',
         loggerMsg: `[用户登录][短信验证码登录] {id}: ${id} {name}: ${name} {date}: ${getDate()}`
       })
     } else {
-      this.app.success({
+      this.success({
         data: {user: {isNewUser: true}},
         msg: '验证成功'
       })
@@ -91,9 +99,9 @@ class UserController extends Controller {
   }
 
   // 重设密码-短信验证码
-  async resetCode() {
+  async getResetCode() {
     const {code, phone} = await this.gCode()
-    this.app.success({msg: `验证码发送成功`, loggerMsg: `[验证码发送][成功]{phone}: ${phone} {code}: ${code}`})
+    this.success({msg: `验证码发送成功`, loggerMsg: `[验证码发送][成功]{phone}: ${phone} {code}: ${code}`})
   }
 
 
@@ -107,7 +115,7 @@ class UserController extends Controller {
       await this.ctx.service.user.update(Object.assign({}, userInfo, {pwd}))
       // TODO 筛选返回字段
       const {id, name, avatar} = userInfo
-      this.app.success({data: {user: {id, name, avatar}}, msg: '重设成功', loggerMsg: `[重设密码][成功]{id}: ${userInfo.id}`})
+      this.success({data: {user: {id, name, avatar}}, msg: '重设成功', loggerMsg: `[重设密码][成功]{id}: ${userInfo.id}`})
     } else {
       throw new ParamsError({msg: '验证码不正确', loggerMsg: `[重设密码][验证码错误]{phone}: ${phone}`})
     }
@@ -136,7 +144,7 @@ class UserController extends Controller {
         phone,
         isNewUser: false
       }
-      this.app.success({
+      this.success({
         data: {
           user
         },
@@ -155,7 +163,7 @@ class UserController extends Controller {
     })
     const [user = null] = await this.ctx.service.user.show({phone, pwd})
     this.ctx.session.userInfo = user
-    this.app.success({
+    this.success({
       data: {user},
       msg: user ? '登录成功' : '手机或密码错误',
       loggerMsg: user ? `[用户登录][手机密码]{phone}: ${phone}` : `[用户登录][手机或密码错误]{phone}: ${phone}`
@@ -167,7 +175,7 @@ class UserController extends Controller {
     const {ctx: {params: {phone}}} = this
     this.ctx.validate({phone: {type: 'string', required: true}}, {phone})
     const [user = null] = await this.ctx.service.user.search({phone})
-    this.app.success({
+    this.success({
       data: {
         user
       },
@@ -181,7 +189,7 @@ class UserController extends Controller {
     const {ctx: {params: {name}}} = this
     this.ctx.validate({name: {type: 'string', required: true}}, {name})
     const users = await this.ctx.service.user.searchByName({name})
-    this.app.success({
+    this.success({
       data: {
         users
       },

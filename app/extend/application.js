@@ -22,35 +22,5 @@ module.exports = {
 
   // 内部错误
   SERVICE_ERROR: 500,
-  /**
-   *
-   * @param code
-   * @param {*} data
-   * @param message
-   */
-  success({code = 200, data = null, msg = '成功', loggerMsg = null}) {
-    this.ctx.body = {
-      code: this.ctx.SUCCESS_CODE,
-      data,
-      msg
-    };
-    this.ctx.status = 200;
-    if (loggerMsg) this.logger.info(loggerMsg)
 
-  },
-
-  /**
-   *
-   * @param {*} code
-   * @param {*} msg
-   */
-  fail({code, msg = '失败'}) {
-    this.ctx.body = {
-      code,
-      data: null,
-      msg,
-    }
-    this.logger.info(msg)
-    this.ctx.status = 200
-  }
 }

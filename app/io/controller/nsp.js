@@ -16,6 +16,9 @@ class NspController extends Controller {
       app.logger.error(error);
     }
   }
+  async sendMessage() {
+
+  }
 }
 
 module.exports = NspController;

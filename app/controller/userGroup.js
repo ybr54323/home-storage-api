@@ -7,10 +7,11 @@
  * @FilePath: \family-kit-api\app\controller\user.js
  */
 'use strict'
-const {Controller} = require('egg')
 const {UnExpectError} = require('../error/error')
+const BaseController = require('./baseController')
 
-class GroupController extends Controller {
+
+class GroupController extends BaseController {
 
   async addFriend() {
     const {ctx: {request: {body: {source_user_id, target_user_id}}}} = this
@@ -25,7 +26,7 @@ class GroupController extends Controller {
       type: 2,
       is_read: 0
     })
-    this.app.success({
+    this.success({
       msg: '发送成功',
       loggerMsg: `[新信息]\n source_user_id: ${source_user_id}\n target_user_id: ${target_user_id}`
     })
@@ -59,7 +60,7 @@ class GroupController extends Controller {
   //       loggerMsg = `[好友申请通过]\n target_user_id: ${this.ctx.session.userInfo.id}`
   //       break
   //   }
-  //   this.app.success({
+  //   this.success({
   //     msg,
   //     loggerMsg
   //   })
