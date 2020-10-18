@@ -16,12 +16,18 @@ class UserController extends BaseController {
   // 验证短信验证码
   // 同时验证手机号码和验证码
   vCode() {
-    const {ctx: {request: {body: {phone: clientPhone, code: clientCode} = {phone: 1, code: 2}}}} = this
-    const {ctx: {session: {zhenziData: {phone, code} = {phone: 3, code: 4}}}} = this
+    const {ctx: {request: {body: {phone: clientPhone, code: clientCode}}}} = this
+    const {ctx: {session: {zhenziData: {phone, code} = {phone: '15817007925', code: '1'}}}} = this
     this.ctx.validate({
       clientCode: {type: 'string', required: true},
       code: {type: 'string', required: true},
     }, {clientCode, code})
+    if (clientCode !== phone) {
+      throw new ParamsError({
+        msg: `请输入和刚刚一致的手机号码`,
+        loggerMsg: `[校验验证码][失败]{phone}: ${phone} {clientPhone}: ${clientPhone}`
+      })
+    }
     return {
       validate: clientCode === code && clientPhone === phone,
       phone,
@@ -36,10 +42,11 @@ class UserController extends BaseController {
     const {ctx: {params: {phone}}} = this
     const {app: {config: {zhenziyun: {app_id, app_secret}}}} = this
     this.ctx.validate({phone: {type: 'string', required: true}}, {phone})
-    const code = generateCode(6);
+    // const code = generateCode(6);
+    const code = '1';
     // 初始化榛子云sms
-    const ZhenzismsClient = require('../util/zhenzisms')
-    const client = new ZhenzismsClient('sms_developer.zhenzikj.com', app_id, app_secret)
+    // const ZhenzismsClient = require('../util/zhenzisms')
+    // const client = new ZhenzismsClient('sms_developer.zhenzikj.com', app_id, app_secret)
     // const {code: zhenziCode, data} = await client.send({
     //   templateId: '895',
     //   number: phone,
@@ -67,7 +74,6 @@ class UserController extends BaseController {
       code
     }
     this.success({
-      code: this.success_CODE,
       msg: `验证码发送成功`,
       loggerMsg: `[登录/注册][验证码发送] {phone}: ${phone} {code}: ${code}`
     })
@@ -101,7 +107,7 @@ class UserController extends BaseController {
   // 重设密码-短信验证码
   async getResetCode() {
     const {code, phone} = await this.gCode()
-    this.success({msg: `验证码发送成功`, loggerMsg: `[验证码发送][成功]{phone}: ${phone} {code}: ${code}`})
+    this.success({msg: `验证码发送成功`, loggerMsg: `[重设密码][验证码发送][成功]{phone}: ${phone} {code}: ${code}`})
   }
 
 

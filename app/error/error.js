@@ -7,25 +7,32 @@ class HError extends Error {
 }
 
 class ParamsError extends HError {
-  constructor(params = {errCode: 402, msg: '传参错误', loggerMsg: ''}) {
-    super(params)
+  constructor({errCode = 402, msg = '传参错误', loggerMsg = ''}) {
+    super({errCode, msg, loggerMsg})
   }
 }
 
 class NoLoginError extends HError {
-  constructor(params = {errCode: 401, msg: '未登录', loggerMsg: ''}) {
-    super(params)
+  constructor({errCode = 401, msg = '未登录，请先登陆', loggerMsg = ''}) {
+    super({errCode, msg, loggerMsg})
   }
 }
 
 class UnExpectError extends HError {
-  constructor(params = {errCode: 408, msg: '未知错误', loggerMsg: ''}) {
-    super(params);
+  constructor({errCode = 408, msg = '未知错误', loggerMsg = ''}) {
+    super({errCode, msg, loggerMsg})
+  }
+}
+
+class CodeTimeoutError extends HError {
+  constructor({errCode = 401, msg = '请重新获取短信验证码', loggerMsg = ''}) {
+    super({errCode, msg, loggerMsg})
   }
 }
 
 module.exports = {
   ParamsError,
   NoLoginError,
-  UnExpectError
+  UnExpectError,
+  CodeTimeoutError
 }

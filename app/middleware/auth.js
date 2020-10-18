@@ -8,30 +8,40 @@
  */
 'use strict'
 
-const {NoLoginError} = require('../error/error');
+const {NoLoginError, CodeTimeoutError} = require('../error/error');
+const r = RegExp
 
 module.exports = (options, app) => {
   return async function auth(ctx, next) {
-    const {path, method, session: {userInfo = null}} = ctx;
+    const {path, method, session: {userInfo = null}} = ctx
     if (!isFreePath(path)) {
       if (!userInfo) {
-        throw new NoLoginError();
+        if (isVCodePath(path)) {
+          throw new CodeTimeoutError()
+        }
+        throw new NoLoginError()
       }
-      await next();
+      await next()
     } else {
-      await next();
+      await next()
     }
 
-    /**
-     * @description 判断当前请求地址是否需要鉴权(请求头要带 Cookie)
-     * @param {string} path 传入当前请求的路径
-     */
+    // 获取验证码的路径不需要验证
     function isFreePath(path) {
       const freeRouteList = [
-        '/user/register_or_login_code', // 获取 注册 / 登录 的短信验证码
-        'user/reset_pwd_code', // 获取重设密码的短信验证码
+        /\/user\/register_or_login_code\/\d+/, // 获取 注册 / 登录 的短信验证码
+        /\/user\/reset_pwd_code\/\d+/, // 获取重设密码的短信验证码
       ]
-      return freeRouteList.indexOf(path) >= 0
+      return freeRouteList.some(r => r.test(path))
+    }
+
+    // 同样是未登录，如果是校验验证码的路由、则抛出CodeTimeoutError, 返回msg是:请重新获取短信验证码, 当作是验证码超时
+    function isVCodePath(path) {
+      const interceptor = [
+        /\/user\/register_or_login/, // 注册 / 登陆的校验验证码路由
+        /\/user\/pwd/ // 重设登陆密码
+      ]
+      return interceptor.some(r => r.test(path))
     }
   };
 };
