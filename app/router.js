@@ -49,7 +49,7 @@ module.exports = app => {
   // 获取所有消息列表
   router.get('/message', controller.message.index)
 
-  // 聊天消息
+  // 创建消息
   router.post('/message', controller.message.create)
 
 

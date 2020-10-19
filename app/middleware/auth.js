@@ -26,11 +26,12 @@ module.exports = (options, app) => {
       await next()
     }
 
-    // 获取验证码的路径不需要验证
+    // 不需要鉴权的路由
     function isFreePath(path) {
       const freeRouteList = [
         /\/user\/register_or_login_code\/\d+/, // 获取 注册 / 登录 的短信验证码
-        /\/user\/reset_pwd_code\/\d+/, // 获取重设密码的短信验证码
+        /\/user\/pwd_code\/\d+/, // 获取重设密码的短信验证码
+        /\/user\/phone_pwd_login/ // 手机号码密码登录
       ]
       return freeRouteList.some(r => r.test(path))
     }

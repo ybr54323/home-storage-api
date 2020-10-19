@@ -62,7 +62,10 @@ class MessageController extends BaseController {
 
     // TODO socket end msg to target
     // 获取target_user_id 的socketId，再给socketid发消息
-
+    await this.app.io.controller.message.addFriend({
+      source_user_id: id,
+      target_user_id
+    })
 
     await this.ctx.service.message.create({type, source_user_id: id, target_user_id, content, group_id})
     return true

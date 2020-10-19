@@ -37,10 +37,9 @@ class UserService extends Service {
   async search(userDTO) {
     let query =
       `
-      select u.id, u.name, u_a.url as avatar
-      from user as u 
-      join user_avatar as u_a on u.id = u_a.user_id and u_a.is_active = 1 
-      where
+      select u.id, u.name,
+      (select url from user_avatar where user_id = u.id and is_active = 1) as avatar_url
+      from user as u where
       `
     for (let property in userDTO) {
       if (userDTO.hasOwnProperty(property)) {
@@ -57,15 +56,15 @@ class UserService extends Service {
   async searchByName(name) {
     return await this.app.mysql.query(
       `
-      select u.id, u.name
+      select u.id, u.name, (select url from user_avatar where user_id = u.id) as avatar_url
       from user as u
-      join user_avatar as u_a on u.id = u_a.user_id and u_a.is_active = 1
       where u.name like %:name% and is_delete = 0
       `, {
         name
       }
     )
   }
+
   async searchByPhone(phone) {
     return await this.app.mysql.query(
       `

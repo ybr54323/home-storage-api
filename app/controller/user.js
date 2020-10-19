@@ -8,7 +8,7 @@
  */
 'use strict'
 const {generateCode, getDate} = require('../util/index')
-const {ParamsError, NoLoginError, UnExpectError} = require('../error/error')
+const {ParamsError, NoLoginError, UnExpectError, ResourceNoExistError} = require('../error/error')
 const BaseController = require('./baseController')
 
 class UserController extends BaseController {
@@ -22,7 +22,7 @@ class UserController extends BaseController {
       clientCode: {type: 'string', required: true},
       code: {type: 'string', required: true},
     }, {clientCode, code})
-    if (clientCode !== phone) {
+    if (clientPhone !== phone) {
       throw new ParamsError({
         msg: `请输入和刚刚一致的手机号码`,
         loggerMsg: `[校验验证码][失败]{phone}: ${phone} {clientPhone}: ${clientPhone}`
@@ -106,7 +106,15 @@ class UserController extends BaseController {
 
   // 重设密码-短信验证码
   async getResetCode() {
-    const {code, phone} = await this.gCode()
+    const {ctx: {params: {phone}}} = this
+    const [user = null] = await this.ctx.service.user.search({phone})
+    if (!user) throw new ResourceNoExistError({msg: '该手机号码尚未注册，请先注册', loggerMsg: `[重设密码][手机号码未注册]{phone}: ${phone}`})
+    const {code} = await this.gCode()
+    this.ctx.session.userInfo = user
+    this.ctx.session.zhenziData = {
+      phone,
+      code
+    }
     this.success({msg: `验证码发送成功`, loggerMsg: `[重设密码][验证码发送][成功]{phone}: ${phone} {code}: ${code}`})
   }
 
@@ -118,10 +126,9 @@ class UserController extends BaseController {
       const {ctx: {request: {body: {pwd}}}} = this
       this.ctx.validate({pwd: {type: 'string', required: true}}, {pwd})
       const {ctx: {session: {userInfo}}} = this
-      await this.ctx.service.user.update(Object.assign({}, userInfo, {pwd}))
-      // TODO 筛选返回字段
-      const {id, name, avatar} = userInfo
-      this.success({data: {user: {id, name, avatar}}, msg: '重设成功', loggerMsg: `[重设密码][成功]{id}: ${userInfo.id}`})
+      await this.ctx.service.user.update({id: userInfo.id, pwd})
+      const {id, name, avatar_url} = userInfo
+      this.success({data: {user: {id, name, avatar_url}}, msg: '重设成功', loggerMsg: `[重设密码][成功]{id}: ${userInfo.id}`})
     } else {
       throw new ParamsError({msg: '验证码不正确', loggerMsg: `[重设密码][验证码错误]{phone}: ${phone}`})
     }
@@ -130,23 +137,25 @@ class UserController extends BaseController {
 
   // 新用户注册
   async register() {
-    const {validate, phone, code} = this.vCode()
-    if (!validate) {
-      throw new ParamsError({msg: '验证码不正确，请再试', loggerMsg: `[重设密码][验证码错误]{phone}: ${phone}`})
+    const {ctx: {request: {body: {username, pwd}}}} = this
+    const {ctx: {session: {userInfo: {isNewUser}, zhenziData: {phone}}}} = this
+    this.ctx.validate({username: {type: 'string', required: true}}, {username})
+    if (!phone) {
+      throw new NoLoginError({
+        msg: '请重新获取验证码',
+        loggerMsg: '[session中获取缓存信息失败][zhenziData]'
+      })
     }
-    const {ctx: {request: {body: {name, pwd}}}} = this
-    const {ctx: {session: {userInfo: {isNewUser} = {isNewUser: null}}}} = this
-    this.ctx.validate({name: {type: 'string', required: true}}, {name})
     if (!isNewUser) {
       throw new NoLoginError({
         msg: '系统出错',
         loggerMsg: '[业务逻辑错误]controller.user.register'
       })
     } else {
-      const newUser = await this.ctx.service.user.create({name, phone, pwd})
+      const newUser = await this.ctx.service.user.create({name: username, phone, pwd})
       const user = this.ctx.session.userInfo = {
         id: newUser.insertId,
-        name,
+        username,
         phone,
         isNewUser: false
       }
@@ -155,7 +164,7 @@ class UserController extends BaseController {
           user
         },
         msg: '登录成功',
-        loggerMsg: `[登录][成功] {id}: ${user.id} {name}: ${user.name} {date}: ${getDate()}`
+        loggerMsg: `[登录][成功] {id}: ${user.id} {name}: ${user.username} {date}: ${getDate()}`
       })
     }
   }
@@ -194,7 +203,7 @@ class UserController extends BaseController {
   async searchByName() {
     const {ctx: {params: {name}}} = this
     this.ctx.validate({name: {type: 'string', required: true}}, {name})
-    const users = await this.ctx.service.user.searchByName({name})
+    const users = await this.ctx.service.user.searchByName(name)
     this.success({
       data: {
         users

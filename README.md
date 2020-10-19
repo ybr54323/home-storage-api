@@ -31,3 +31,8 @@ $ npm stop
 
 
 [egg]: https://eggjs.org
+
+## socket
+client: `vue-socket.io`
+server: `egg-socket.io`
+
