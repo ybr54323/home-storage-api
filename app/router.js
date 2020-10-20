@@ -47,16 +47,25 @@ module.exports = app => {
   router.put('/friend/:user_id', controller.friend.deleteFriend)
 
   // 获取所有消息列表
-  router.get('/message', controller.message.index)
+  router.get('/message', controller.message.getAllMessage)
+
+  router.get('/message/chat', controller.message.getChatMessage)
+  router.get('/message/friend', controller.message.getFriendMessage)
+  router.get('/message/group', controller.message.getGroupMessage)
 
   // 创建消息
-  router.post('/message', controller.message.create)
+  router.post('/message/chat', controller.message.createChatMessage)
+  router.post('/message/friend', controller.message.createFriendMessage)
+  router.post('/message/group', controller.message.createGroupMessage)
 
+  // view message
+  router.put('/message/chat', controller.message.viewChatMessage)
+  router.put('/message/friend', controller.message.viewFriendMessage)
+  router.put('/message/group', controller.message.viewGroupMessage)
 
-  // 查看消息 (聊天消息)
-  router.put('/message/:source_user_id', controller.message.viewMessage)
-  // 处理消息
-  router.put('/message/:message_id/:type/:answer', controller.message.answerMessage)
+  // permit or reject
+  router.post('/message/friend/handle', controller.message.handleFriendMessage)
+  router.post('/message/group/handle', controller.message.handleGroupMessage)
 
 
   io.of('/').route('login', io.controller.message.index)

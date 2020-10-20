@@ -10,6 +10,8 @@
 const Service = require('egg').Service;
 
 class FriendService extends Service {
+
+
   async index(id_list = []) {
     if (!id_list.length) return [];
     return this.app.mysql.query(
@@ -39,57 +41,12 @@ class FriendService extends Service {
     }
   }
 
-  // async create(field, value) {
-  //   return this.app.mysql.insert('user', { [field]: value })
-  // }
+
+
   async create(friendDto) {
     return this.app.mysql.insert('friend', friendDto);
   }
 
-  /**
-   * @description 更新用户信息
-   * @param {Object} userObj
-   */
-  async update(userObj) {
-    return this.app.mysql.update('user', userObj);
-  }
-
-  async registerWidthMobile(phone) {
-    return this.app.mysql.query('insert into user (phone) value(:phone)', { phone });
-  }
-
-  /**
-   * 用手机号码搜索
-   */
-  async searchUserByPhone(phone) {
-    return this.app.mysql.select('user', {
-      where: {
-        phone
-      },
-    })
-  }
-
-  /**
-   * 用wx昵称搜索
-   */
-  async searchUserByNickName(nickname) {
-    return this.app.mysql.select('user', {
-      where: {
-        nickname
-      }
-    })
-  }
-
-  /**
-   * 用用户名搜索
-   */
-  async searchUserByUserName(username) {
-    return this.app.mysql.select('user', {
-      where: {
-        username
-      }
-    })
-  }
 }
 
 module.exports = FriendService;

@@ -9,9 +9,9 @@ class UserService extends Service {
       const user_id_list = userDTO;
       return await this.app.mysql.query(
         `
-        select u.id, u.name, u_a.url as avatar 
+        select u.id, u.name, 
+        (select url from user_avatar where user_id = u.id and is_delete = 0 and is_active = 1) as avatar_url
         from user as u
-        join user_avatar as u_a on u.id = u_a.user_id and u_a.is_active = 1
         where u.id in (:user_id_list)
         `, {
           user_id_list
@@ -56,7 +56,8 @@ class UserService extends Service {
   async searchByName(name) {
     return await this.app.mysql.query(
       `
-      select u.id, u.name, (select url from user_avatar where user_id = u.id) as avatar_url
+      select u.id, u.name,
+       (select url from user_avatar where user_id = u.id and is_delete = 0 and is_active = 1) as avatar_url
       from user as u
       where u.name like %:name% and is_delete = 0
       `, {
@@ -68,9 +69,9 @@ class UserService extends Service {
   async searchByPhone(phone) {
     return await this.app.mysql.query(
       `
-      select u.id, u.name
+      select u.id, u.name,
+      (select url from user_avatar where user_id = u.id and is_delete = 0 and is_active = 1) as avatar_url
       from user as u
-      join user_avatar as u_a on u.id = u_a.user_id and u_a.is_active = 1
       where u.phone = :phone and is_delete = 0
       `, {
         phone

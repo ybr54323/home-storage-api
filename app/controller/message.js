@@ -11,19 +11,157 @@ const {UnExpectError} = require('../error/error')
 const BaseController = require('./baseController')
 
 class MessageController extends BaseController {
-
-  async index() {
+  // 获取所有的message
+  async getAllMessage() {
     const {ctx: {session: {userInfo: {id}}}} = this
-    const message = await this.ctx.service.message.getChatMessage(id)
+    const message = await this.ctx.service.message.getAllMessage(id)
     this.success({data: {...message}, msg: '获取消息成功', loggerMsg: `[消息][获取][成功]{id}: ${id}`})
   }
 
-
-  async viewMessage() {
+  // 获取聊天信息
+  async getChatMessage() {
     const {ctx: {session: {userInfo: {id}}}} = this
-    // TODO 什么时候view再想想
-    // await this.ctx.service.message.view()
-    this.success({data: {messages}, msg: '获取消息成功', loggerMsg: `[消息][获取][成功]{id}: ${id}`})
+    const chatMessage = await this.ctx.service.message.getChatMessage(id)
+    this.success({data: {chatMessage}, msg: '获取消息成功', loggerMsg: `[聊天消息][获取][成功]{id}: ${id}`})
+  }
+
+  // 获取好友信息
+  async getFriendMessage() {
+    const {ctx: {session: {userInfo: {id}}}} = this
+    const friendMessage = await this.ctx.service.message.getFriendMessage(id)
+    this.success({data: {friendMessage}, msg: '获取消息成功', loggerMsg: `[好友邀请信息][获取][成功]{id}: ${id}`})
+  }
+
+  // 获取群组信息
+  async getGroupMessage() {
+    const {ctx: {session: {userInfo: {id}}}} = this
+    const groupMessage = await this.ctx.service.message.getGroupMessage(id)
+    this.success({data: {groupMessage}, msg: '获取消息成功', loggerMsg: `[群组邀请信息][获取][成功]{id}: ${id}`})
+  }
+
+  // 创建聊天信息
+  async createChatMessage() {
+    const {ctx: {session: {userInfo: {id}}}} = this
+    const {ctx: {request: {body: {target_user_id, content}}}} = this
+
+    this.ctx.validate({target_user_id: {type: 'string', required: true}}, {target_user_id})
+
+    await this.ctx.service.message.create({type: 1, source_user_id: id, target_user_id, content})
+    this.success({
+      msg: '请求成功',
+      loggerMsg: `[消息][聊天消息]{source_user_id}: ${id} {target_user_id}: ${target_user_id} {content}: ${content}`
+    })
+  }
+
+  // 创建好友申请信息
+  async createFriendMessage() {
+    const {ctx: {session: {userInfo: {id}}}} = this
+    const {ctx: {request: {body: {target_user_id}}}} = this
+
+    this.ctx.validate({target_user_id: {type: 'string', required: true}}, {target_user_id})
+
+    await this.ctx.service.message.create({type: 2, source_user_id: id, target_user_id})
+    this.success({
+      msg: '申请成功',
+      loggerMsg: `[消息][好友申请消息]{source_user_id}: ${id} {target_user_id}: ${target_user_id}`
+    })
+  }
+
+  // 创建群组申请信息
+  async createGroupMessage() {
+    const {ctx: {session: {userInfo: {id}}}} = this
+    const {ctx: {request: {body: {target_user_id, group_id}}}} = this
+
+    this.ctx.validate({
+      target_user_id: {type: 'string', required: true},
+      group_id: {type: 'string', required: true}
+    }, {target_user_id, group_id})
+
+    await this.ctx.service.message.create({type: 2, source_user_id: id, target_user_id, group_id})
+    this.success({
+      msg: '申请成功',
+      loggerMsg: `[消息][群组申请信息]{source_user_id}: ${id} {target_user_id}: ${target_user_id} {group_id}: ${group_id}`
+    })
+  }
+
+  // 查看聊天信息, 即已读, 一定是以target的身份来查看(已读)
+  async viewChatMessage() {
+    const {ctx: {session: {userInfo: {id}}}} = this
+    await this.ctx.service.message.viewChatMessage(id)
+    this.success({
+      loggerMsg: `[消息][更新消息已读状态]{target_user_id}: ${id} {message_id_list}: ${message_id_list}`
+    })
+  }
+
+  // 查看好友申请信息
+  async viewFriendMessage() {
+    const {ctx: {session: {userInfo: {id}}}} = this
+    await this.ctx.service.message.viewFriendMessage(id)
+    this.success({
+      loggerMsg: `[消息][更新消息已读状态]{target_user_id}: ${id} {message_id_list}: ${message_id_list}`
+    })
+  }
+
+  // 查看群组申请信息
+  async viewGroupMessage() {
+    const {ctx: {session: {userInfo: {id}}}} = this
+    await this.ctx.service.message.viewGroupMessage(id)
+    this.success({
+      loggerMsg: `[消息][更新消息已读状态]{target_user_id}: ${id} {message_id_list}: ${message_id_list}`
+    })
+  }
+
+  // TODO
+  // 处理聊天信息 聊天信息并不需要处理
+  async handleChatMessage() {
+    throw new Error('聊天信息并不需要处理')
+  }
+
+  // 处理好友申请信息
+  async handleFriendMessage() {
+    const {ctx: {session: {userInfo: {id: target_user_id}}}} = this
+    const {ctx: {request: {body: {message_id, answer, source_user_id}}}} = this
+
+    this.ctx.validate({
+      message_id: {type: 'number', required: true},
+      answer: {type: 'number', required: true},
+      source_user_id: {type: 'number', required: true}
+    }, {message_id, answer, source_user_id})
+    // 允许
+    if (answer === 1) {
+      await this.ctx.service.friend.create({
+        source_user_id,
+        target_user_id
+      })
+    }
+    await this.ctx.service.message.handleFriendMessage({message_id, target_user_id, answer})
+    this.success({
+      loggerMsg: `[消息][处理消息]{message_id}: ${message_id} {answer}: ${answer} {target_user_id}: ${target_user_id} `
+    })
+  }
+
+  // 处理群组申请信息
+  async handleGroupMessage() {
+    const {ctx: {session: {userInfo: {id: target_user_id}}}} = this
+    const {ctx: {request: {body: {message_id, answer, group_id, source_user_id}}}} = this
+    this.ctx.validate({
+      message_id: {type: 'number', required: true},
+      answer: {type: 'number', required: true},
+      group_id: {type: 'number', required: true},
+      source_user_id: {type: 'number', required: true}
+    }, {message_id, answer, group_id, source_user_id})
+    // TODO
+    if (answer === 1) {
+      await this.ctx.service.userGroup.create({
+        group_id,
+        source_user_id,
+        target_user_id,
+      })
+    }
+    await this.ctx.service.message.handleGroupMessage({message_id, target_user_id, answer})
+    this.success({
+      loggerMsg: `[消息][处理消息]{message_id}: ${message_id} {answer}: ${answer} {target_user_id}: ${target_user_id} `
+    })
   }
 
   // type: 1.对话消息 2.好友申请 3.进群邀请
@@ -45,67 +183,28 @@ class MessageController extends BaseController {
     if (type === 1) {
       this.ctx.validate({
         type: {type: 'message_type', required: true},
-        target_user_id: {type: 'number', required: true}
+        target_user_id: {type: 'string', required: true}
       }, {type, target_user_id})
     } else if (type === 2) {
       this.ctx.validate({
         type: {type: 'message_type', required: true},
-        target_user_id: {type: 'number', required: true}
+        target_user_id: {type: 'string', required: true}
       }, {type, target_user_id})
     } else if (type === 3) {
       this.ctx.validate({
         type: {type: 'message_type', required: true},
-        target_user_id: {type: 'number', required: true},
-        group_id: {type: 'number', required: true}
+        target_user_id: {type: 'string', required: true},
+        group_id: {type: 'string', required: true}
       }, {type, target_user_id, group_id})
     }
 
-    // TODO socket end msg to target
-    // 获取target_user_id 的socketId，再给socketid发消息
-    await this.app.io.controller.message.addFriend({
-      source_user_id: id,
-      target_user_id
-    })
-
     await this.ctx.service.message.create({type, source_user_id: id, target_user_id, content, group_id})
-    return true
-  }
-
-  async
-
-
-  // type: 2.好友申请 3.进群邀请 这两种才能"answer"
-  // answer 0.no 1.yes
-  async answerMessage() {
-    const {ctx: {session: {userInfo: {id}}}} = this
-    const {ctx: {params: {message_id, type, source_user_id, answer}}} = this
-
-    this.ctx.validate({
-      message_id: {type: 'number', required: true},
-      type: {type: 'message_type', required: true},
-      source_user_id: {type: 'number', required: true},
-      answer: {type: 'message_answer', required: true}
-    }, {
-      message_id,
-      type,
-      source_user_id,
-      answer
+    this.success({
+      msg: '请求成功',
+      loggerMsg: `[申请添加好友]{source_user_id}: ${id} {target_user_id}: ${target_user_id}`
     })
-
-    if (type === 2) { // 好友申请 逻辑上必需 target_user_id
-      await this.ctx.service.message.answer({id: message_id, target_user_id: id, is_read: 1, answer})
-      if (answer === 1) { // 同意
-        await this.ctx.service.friend.create({source_user_id, target_user_id: id}) // 插入好友表
-        // TODO socket 通知
-        this.success({
-          msg: '成功通过好友申请',
-          loggerMsg: `[消息处理][好友申请][添加]{source_user_id}: ${source_user_id} {target_user_id}: ${id}`
-        })
-      }
-    } else if (type === 3) { //
-      // TODO
-    }
   }
+
 }
 
 module.exports = MessageController;

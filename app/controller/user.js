@@ -7,7 +7,7 @@
  * @FilePath: \family-kit-api\app\controller\user.js
  */
 'use strict'
-const {generateCode, getDate} = require('../util/index')
+const {generateCode, getDate, fillZero} = require('../util/index')
 const {ParamsError, NoLoginError, UnExpectError, ResourceNoExistError} = require('../error/error')
 const BaseController = require('./baseController')
 
@@ -17,7 +17,7 @@ class UserController extends BaseController {
   // 同时验证手机号码和验证码
   vCode() {
     const {ctx: {request: {body: {phone: clientPhone, code: clientCode}}}} = this
-    const {ctx: {session: {zhenziData: {phone, code} = {phone: '15817007925', code: '1'}}}} = this
+    const {ctx: {session: {zhenziData: {phone, code}}}} = this
     this.ctx.validate({
       clientCode: {type: 'string', required: true},
       code: {type: 'string', required: true},
@@ -155,7 +155,7 @@ class UserController extends BaseController {
       const newUser = await this.ctx.service.user.create({name: username, phone, pwd})
       const user = this.ctx.session.userInfo = {
         id: newUser.insertId,
-        username,
+        name: username,
         phone,
         isNewUser: false
       }
