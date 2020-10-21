@@ -12,11 +12,11 @@ const BaseController = require('./baseController')
 
 class MessageController extends BaseController {
   // 获取所有的message
-  async getAllMessage() {
-    const {ctx: {session: {userInfo: {id}}}} = this
-    const message = await this.ctx.service.message.getAllMessage(id)
-    this.success({data: {...message}, msg: '获取消息成功', loggerMsg: `[消息][获取][成功]{id}: ${id}`})
-  }
+  // async getAllMessage() {
+  //   const {ctx: {session: {userInfo: {id}}}} = this
+  //   const message = await this.ctx.service.message.getAllMessage(id)
+  //   this.success({data: {...message}, msg: '获取消息成功', loggerMsg: `[消息][获取][成功]{id}: ${id}`})
+  // }
 
   // 获取聊天信息
   async getChatMessage() {
@@ -89,7 +89,7 @@ class MessageController extends BaseController {
     const {ctx: {session: {userInfo: {id}}}} = this
     await this.ctx.service.message.viewChatMessage(id)
     this.success({
-      loggerMsg: `[消息][更新消息已读状态]{target_user_id}: ${id} {message_id_list}: ${message_id_list}`
+      loggerMsg: `[消息][更新消息已读状态]{target_user_id}: ${id}`
     })
   }
 
@@ -98,7 +98,7 @@ class MessageController extends BaseController {
     const {ctx: {session: {userInfo: {id}}}} = this
     await this.ctx.service.message.viewFriendMessage(id)
     this.success({
-      loggerMsg: `[消息][更新消息已读状态]{target_user_id}: ${id} {message_id_list}: ${message_id_list}`
+      loggerMsg: `[消息][更新消息已读状态]{target_user_id}: ${id}`
     })
   }
 
@@ -107,7 +107,7 @@ class MessageController extends BaseController {
     const {ctx: {session: {userInfo: {id}}}} = this
     await this.ctx.service.message.viewGroupMessage(id)
     this.success({
-      loggerMsg: `[消息][更新消息已读状态]{target_user_id}: ${id} {message_id_list}: ${message_id_list}`
+      loggerMsg: `[消息][更新消息已读状态]{target_user_id}: ${id}`
     })
   }
 
@@ -123,9 +123,9 @@ class MessageController extends BaseController {
     const {ctx: {request: {body: {message_id, answer, source_user_id}}}} = this
 
     this.ctx.validate({
-      message_id: {type: 'number', required: true},
+      message_id: {type: 'string', required: true},
       answer: {type: 'number', required: true},
-      source_user_id: {type: 'number', required: true}
+      source_user_id: {type: 'string', required: true}
     }, {message_id, answer, source_user_id})
     // 允许
     if (answer === 1) {
@@ -136,7 +136,7 @@ class MessageController extends BaseController {
     }
     await this.ctx.service.message.handleFriendMessage({message_id, target_user_id, answer})
     this.success({
-      loggerMsg: `[消息][处理消息]{message_id}: ${message_id} {answer}: ${answer} {target_user_id}: ${target_user_id} `
+      loggerMsg: `[消息][处理好友申请消息]{message_id}: ${message_id} {answer}: ${answer} {target_user_id}: ${target_user_id} `
     })
   }
 
@@ -160,7 +160,7 @@ class MessageController extends BaseController {
     }
     await this.ctx.service.message.handleGroupMessage({message_id, target_user_id, answer})
     this.success({
-      loggerMsg: `[消息][处理消息]{message_id}: ${message_id} {answer}: ${answer} {target_user_id}: ${target_user_id} `
+      loggerMsg: `[消息][处理群组申请消息]{message_id}: ${message_id} {answer}: ${answer} {target_user_id}: ${target_user_id} `
     })
   }
 

@@ -5,39 +5,85 @@ class MessageService extends Service {
 
   // 获取聊天消息
   // 发起人和接收人
-  async getAllMessage(user_id) {
-    const chatMessage = [],
-      friendMessage = [],
-      groupMessage = []
+  // async getAllMessage(user_id) {
+  //   const chatMessage = await this.getChatMessage(user_id)
+  //   const friendMessage = []
+  //   const groupMessage = []
+  //
+  //   const allMessage = await this.app.mysql.query(
+  //     `
+  //     select m.*,
+  //     (select url from user_avatar where user_id = m.source_user_id and is_active = 1 and is_delete = 0) as source_user_avatar_url,
+  //     (select name from user where id = m.source_user_id) as source_user_name
+  //     from message as m
+  //     where m.target_user_id = :user_id and m.target_user_is_delete = 0 and m.is_delete = 0
+  //     limit 100
+  //     `, {
+  //       user_id
+  //     }
+  //   )
+  //
+  //   allMessage.forEach(message => {
+  //     const {type} = message
+  //     const messages = type === 1 ? chatMessage : type === 2 ? friendMessage : groupMessage
+  //     messages.push(message)
+  //   })
+  //
+  //   return {
+  //     chatMessage,
+  //     friendMessage,
+  //     groupMessage
+  //   }
+  // }
 
-    const allMessage = await this.app.mysql.query(
+  // 获取聊天信息
+  async getChatMessage(user_id) {
+
+    const message = await this.app.mysql.query(
       `
-      select m.*,
-      (select url from user_avatar where user_id = m.source_user_id and is_active = 1 and is_delete = 0) as source_user_avatar_url,
-      (select name from user where id = m.source_user_id) as source_user_name
-      from message as m 
-      where m.target_user_id = :user_id and m.target_user_delete = 0 and m.is_delete = 0
-      limit 100
+      select * from message
+      where 
+      (source_user_id = :user_id and source_user_is_delete = 0)
+      or
+      (target_user_id = :user_id and target_user_is_delete = 0)
+      and type = 1
+      limit 1000
       `, {
         user_id
       }
     )
-
-    allMessage.forEach(message => {
-      const {type} = message
-      const messages = type === 1 ? chatMessage : type === 2 ? friendMessage : groupMessage
-      messages.push(message)
+    const otherUserIds = new Set()
+    message.forEach(m => {
+      m.source_user_id !== user_id && otherUserIds.add(m.source_user_id)
+      m.target_user_id !== user_id && otherUserIds.add(m.target_user_id)
     })
 
-    return {
-      chatMessage,
-      friendMessage,
-      groupMessage
-    }
-  }
-
-  async getChatMessage(user_id) {
-    return this.getMessage({type: 1, user_id})
+    const otherUsers = await this.app.mysql.query(
+      `
+      select u.*, 
+      (select url from user_avatar where user_id = u.id and is_active = 1 and is_delete = 0) as avatar_url
+      from user as u
+      where u.id in (:ids)
+      `, {
+        ids: [...otherUserIds]
+      }
+    )
+    message.forEach(m => {
+      for (let i = 0; i < otherUsers.length; i++) {
+        const u = otherUsers[i]
+        if (m.source_user_id === u.id) {
+          m.target_user_name = u.name
+          m.target_user_avatar_url = u.avatar_url
+          break
+        }
+        if (m.target_user_id === u.id) {
+          m.target_user_name = u.name
+          m.target_user_avatar_url = u.avatar_url
+          break
+        }
+      }
+    })
+    return message
   }
 
   async getFriendMessage(user_id) {
@@ -62,7 +108,7 @@ class MessageService extends Service {
       (select url from user_avatar where user_id = m.source_user_id and is_active = 1 and is_delete = 0) as source_user_avatar_url,
       (select name from user where id = m.source_user_id) as source_user_name
       from message as m 
-      where m.target_user_id = :user_id and m.target_user_delete = 0 and m.type = :type and m.is_delete = 0
+      where m.target_user_id = :user_id and m.target_user_is_delete = 0 and m.type = :type and m.is_delete = 0
       limit 100
       `, {
         type,

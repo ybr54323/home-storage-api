@@ -41,13 +41,12 @@ module.exports = app => {
   router.get('/friends', controller.friend.getFriend)
 
   // 添加好友
-  router.post('/friend/:user_id', controller.friend.addFriend)
 
   // 删除好友
   router.put('/friend/:user_id', controller.friend.deleteFriend)
 
   // 获取所有消息列表
-  router.get('/message', controller.message.getAllMessage)
+  // router.get('/message', controller.message.getAllMessage)
 
   router.get('/message/chat', controller.message.getChatMessage)
   router.get('/message/friend', controller.message.getFriendMessage)
@@ -59,9 +58,9 @@ module.exports = app => {
   router.post('/message/group', controller.message.createGroupMessage)
 
   // view message
-  router.put('/message/chat', controller.message.viewChatMessage)
-  router.put('/message/friend', controller.message.viewFriendMessage)
-  router.put('/message/group', controller.message.viewGroupMessage)
+  router.post('/message/chat/view', controller.message.viewChatMessage)
+  router.post('/message/friend/view', controller.message.viewFriendMessage)
+  router.post('/message/group/view', controller.message.viewGroupMessage)
 
   // permit or reject
   router.post('/message/friend/handle', controller.message.handleFriendMessage)
