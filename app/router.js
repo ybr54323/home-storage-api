@@ -66,9 +66,15 @@ module.exports = app => {
   router.post('/message/friend/handle', controller.message.handleFriendMessage)
   router.post('/message/group/handle', controller.message.handleGroupMessage)
 
+  router.get('/assume_rule', controller.oss.getAssumeRule)
+
+  // group
+  router.post('/group', controller.group.createGroup)
+  router.get('/group', controller.group.getGroup)
 
   io.of('/').route('login', io.controller.message.index)
   io.of('/').route('addFriend', io.controller.message.addFriend)
+  io.of('/').route('inviteFriend', io.controller.message.inviteFriend)
 
 
 };

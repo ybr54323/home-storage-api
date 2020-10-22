@@ -11,7 +11,33 @@ const Service = require('egg').Service;
 
 class GroupService extends Service {
 
+  async show(user_id) {
 
+    return await this.app.mysql.query(
+      `
+      select g.id, g.name, g.desc, 
+      (select url from group_avatar where group_id = g.id and is_active = 1 and is_delete = 0) as group_avatar_url
+      from my_group as g
+      where g.id in
+      (
+      select group_id from group_user where
+      (source_user_id = :user_id)
+      or
+      (target_user_id = :user_id)
+      and is_delete = 0 
+      )
+      `,
+      {user_id}
+    )
+  }
+
+  async create(groupDTO) {
+    return await this.app.mysql.insert('my_group', groupDTO)
+  }
+
+  async update(groupDTO) {
+    return await this.app.mysql.update('my_group', groupDTO)
+  }
 }
 
 module.exports = GroupService;

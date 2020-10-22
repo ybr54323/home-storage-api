@@ -101,9 +101,29 @@ class MessageService extends Service {
    * @returns {Promise<void>}
    */
   async getMessage({type, user_id}) {
-    // 搜索出所有聊天信息、并且带上对方的姓名、头像url
-    return await this.app.mysql.query(
-      `
+    console.log(type)
+
+    if (type === 3) {
+      return await this.app.mysql.query(
+        `
+      select m.*,
+      (select url from user_avatar where user_id = m.source_user_id and is_active = 1 and is_delete = 0) as source_user_avatar_url,
+      (select name from user where id = m.source_user_id) as source_user_name,
+      g.name as group_name,
+      (select url from group_avatar where group_id = g.id and is_active = 1 and is_delete = 0) as group_avatar_url
+      from message as m 
+      join my_group as g on g.id = m.group_id  
+      where m.target_user_id = :user_id and m.target_user_is_delete = 0 and m.type = :type and m.is_delete = 0
+      limit 100
+      `, {
+          type,
+          user_id
+        }
+      )
+    } else if (type === 2) {
+      // 搜索出所有聊天信息、并且带上对方的姓名、头像url
+      return await this.app.mysql.query(
+        `
       select m.*,
       (select url from user_avatar where user_id = m.source_user_id and is_active = 1 and is_delete = 0) as source_user_avatar_url,
       (select name from user where id = m.source_user_id) as source_user_name
@@ -111,10 +131,13 @@ class MessageService extends Service {
       where m.target_user_id = :user_id and m.target_user_is_delete = 0 and m.type = :type and m.is_delete = 0
       limit 100
       `, {
-        type,
-        user_id
-      }
-    )
+          type,
+          user_id
+        }
+      )
+    }
+
+
   }
 
 
@@ -166,6 +189,21 @@ class MessageService extends Service {
   // 创建消息
   async create(messageDTO) {
     return await this.app.mysql.insert('message', messageDTO)
+  }
+
+  // 批量建群组邀请信息
+  async batchCreateGroupMessage({source_user_id, target_user_ids, group_id}) {
+    const sql =
+      `
+      insert into message (source_user_id, target_user_id, group_id, type) values ?
+      `
+    const values = []
+    target_user_ids.forEach(id => {
+      values.push([
+        source_user_id, id, group_id, 3
+      ])
+    })
+    return await this.app.mysql.query(sql, [values])
   }
 
   // 更新消息

@@ -7,6 +7,7 @@
     "declarations": true
   },
   "dependencies": {
+    "@alicloud/sts-sdk": "^1.0.2",
     "crypto-js": "^4.0.0",
     "egg": "^2.15.1",
     "egg-logger": "^2.4.2",
