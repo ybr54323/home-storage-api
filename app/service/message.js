@@ -101,8 +101,6 @@ class MessageService extends Service {
    * @returns {Promise<void>}
    */
   async getMessage({type, user_id}) {
-    console.log(type)
-
     if (type === 3) {
       return await this.app.mysql.query(
         `
@@ -164,13 +162,13 @@ class MessageService extends Service {
   }
 
   // 处理好友申请信息
-  async handleFriendMessage({message_id, target_user_id, answer}) {
-    return await this.update({id: message_id, type: 2, target_user_id, answer})
+  async handleFriendMessage({message_id, answer}) {
+    return await this.update({id: message_id, answer})
   }
 
   // 处理群组申请信息
-  async handleGroupMessage({message_id, target_user_id, answer}) {
-    return await this.update({id: message_id, type: 3, target_user_id, answer})
+  async handleGroupMessage({message_id, answer}) {
+    return await this.update({id: message_id, answer})
   }
 
   async batchUpdate({type, target_user_id}) {

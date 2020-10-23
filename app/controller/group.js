@@ -37,6 +37,9 @@ class GroupController extends BaseController {
     this.success({data: {group}, msg: '创建成功', loggerMsg: `[搜索群组]{id}: ${id} `})
   }
 
+
+
+
   // async handle() {
   //   const {ctx: {request: {body: {message_id, answer}}}} = this
   //   await this.ctx.service.message.update({

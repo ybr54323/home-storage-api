@@ -36,3 +36,8 @@ $ npm stop
 client: `vue-socket.io`
 server: `egg-socket.io`
 
+# table
+- friend
+    - ## 中间表
+- group_user
+    - group 和 user 的中间表

@@ -10,82 +10,21 @@
 const Service = require('egg').Service;
 
 class GoodService extends Service {
-  async index(id_list = []) {
-    if (!id_list.length) return [];
-    return this.app.mysql.query(
-      `select u.*, f.path as custom_avatar_url from user as u
-       join ybr_file as f on f.id = u.avatar_id
-       where u.id in (:id_list) and status = 1
+  async getGood(user_id) {
+    return await this.app.mysql.query(
+      `
+      select g.*,
+      (select url from good_img where good_id = g.id and is_delete = 0 limit 1) as good_img_url
+      from good as g
+      where g.owner_user_id = :user_id and g.is_delete = 0
       `, {
-        id_list
+        user_id
       }
-    );
+    )
   }
 
-  // TODO
-  async show(userObj) {
-    if (Array.isArray(userObj)) {
-      const id_list = userObj;
-      return await this.app.mysql.query(
-        `select u.*, f.path as custom_avatar_url from user as u
-       join ybr_file as f on f.id = u.avatar_id
-       where u.id in (:id_list) and status = 1
-      `, {
-          id_list
-        }
-      );
-    } else if (typeof userObj === 'object') {
-      return await this.app.mysql.select('user', { where: userObj, limit: 1 });
-    }
-  }
-
-  async create(goodDto) {
-    return this.app.mysql.insert('good', goodDto);
-  }
-
-  /**
-   * @description 更新用户信息
-   * @param {Object} userObj
-   */
-  async update(userObj) {
-    return this.app.mysql.update('user', userObj);
-  }
-
-  async registerWidthMobile(phone) {
-    return this.app.mysql.query('insert into user (phone) value(:phone)', { phone });
-  }
-
-  /**
-   * 用手机号码搜索
-   */
-  async searchUserByPhone(phone) {
-    return this.app.mysql.select('user', {
-      where: {
-        phone
-      },
-    })
-  }
-
-  /**
-   * 用wx昵称搜索
-   */
-  async searchUserByNickName(nickname) {
-    return this.app.mysql.select('user', {
-      where: {
-        nickname
-      }
-    })
-  }
-
-  /**
-   * 用用户名搜索
-   */
-  async searchUserByUserName(username) {
-    return this.app.mysql.select('user', {
-      where: {
-        username
-      }
-    })
+  async createGood(goodDTO) {
+    return await this.app.mysql.insert('good', goodDTO)
   }
 }
 

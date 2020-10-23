@@ -62,6 +62,14 @@ class FriendService extends Service {
     return this.app.mysql.insert('friend', friendDto);
   }
 
+  async find(friendDTO) {
+    return this.app.mysql.select('friend', {
+      where: {
+        ...friendDTO
+      },
+      limit: 1
+    })
+  }
 }
 
 module.exports = FriendService;

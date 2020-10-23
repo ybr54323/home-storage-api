@@ -22,21 +22,21 @@ class MessageController extends BaseController {
   async getChatMessage() {
     const {ctx: {session: {userInfo: {id}}}} = this
     const chatMessage = await this.ctx.service.message.getChatMessage(id)
-    this.success({data: {chatMessage}, msg: '获取消息成功', loggerMsg: `[聊天消息][获取][成功]{id}: ${id}`})
+    this.success({data: {chatMessage}, msg: '获取消息成功', loggerMsg: `[获取聊天消息]{id}: ${id}`})
   }
 
   // 获取好友信息
   async getFriendMessage() {
     const {ctx: {session: {userInfo: {id}}}} = this
     const friendMessage = await this.ctx.service.message.getFriendMessage(id)
-    this.success({data: {friendMessage}, msg: '获取消息成功', loggerMsg: `[好友邀请信息][获取][成功]{id}: ${id}`})
+    this.success({data: {friendMessage}, msg: '获取消息成功', loggerMsg: `[获取好友邀请信息]{id}: ${id}`})
   }
 
   // 获取群组信息
   async getGroupMessage() {
     const {ctx: {session: {userInfo: {id}}}} = this
     const groupMessage = await this.ctx.service.message.getGroupMessage(id)
-    this.success({data: {groupMessage}, msg: '获取消息成功', loggerMsg: `[群组邀请信息][获取][成功]{id}: ${id}`})
+    this.success({data: {groupMessage}, msg: '获取消息成功', loggerMsg: `[获取群组邀请信息]{id}: ${id}`})
   }
 
   // 创建聊天信息
@@ -49,7 +49,7 @@ class MessageController extends BaseController {
     await this.ctx.service.message.create({type: 1, source_user_id: id, target_user_id, content})
     this.success({
       msg: '请求成功',
-      loggerMsg: `[消息][聊天消息]{source_user_id}: ${id} {target_user_id}: ${target_user_id} {content}: ${content}`
+      loggerMsg: `[创建聊天消息]{source_user_id}: ${id} {target_user_id}: ${target_user_id} {content}: ${content}`
     })
   }
 
@@ -129,12 +129,21 @@ class MessageController extends BaseController {
     }, {message_id, answer, source_user_id})
     // 允许
     if (answer === 1) {
-      await this.ctx.service.friend.create({
+      // 查重
+      const [exist = null] = await this.ctx.service.friend.find({
         source_user_id,
-        target_user_id
+        target_user_id,
+        is_delete: 0
       })
+      if (!exist) {
+        await this.ctx.service.friend.create({
+          source_user_id,
+          target_user_id,
+          is_delete: 0
+        })
+      }
     }
-    await this.ctx.service.message.handleFriendMessage({message_id, target_user_id, answer})
+    await this.ctx.service.message.handleFriendMessage({message_id, answer})
     this.success({
       loggerMsg: `[消息][处理好友申请消息]{message_id}: ${message_id} {answer}: ${answer} {target_user_id}: ${target_user_id} `
     })
@@ -145,20 +154,28 @@ class MessageController extends BaseController {
     const {ctx: {session: {userInfo: {id: target_user_id}}}} = this
     const {ctx: {request: {body: {message_id, answer, group_id, source_user_id}}}} = this
     this.ctx.validate({
-      message_id: {type: 'number', required: true},
+      message_id: {type: 'string', required: true},
       answer: {type: 'number', required: true},
-      group_id: {type: 'number', required: true},
-      source_user_id: {type: 'number', required: true}
+      group_id: {type: 'string', required: true},
+      source_user_id: {type: 'string', required: true}
     }, {message_id, answer, group_id, source_user_id})
-    // TODO
     if (answer === 1) {
-      await this.ctx.service.userGroup.create({
+      const [exist = null] = await this.ctx.service.userGroup.find({
         group_id,
         source_user_id,
         target_user_id,
+        is_delete: 0
       })
+      if (!exist) {
+        await this.ctx.service.userGroup.create({
+          group_id,
+          source_user_id,
+          target_user_id,
+          is_delete: 0
+        })
+      }
     }
-    await this.ctx.service.message.handleGroupMessage({message_id, target_user_id, answer})
+    await this.ctx.service.message.handleGroupMessage({message_id, answer})
     this.success({
       loggerMsg: `[消息][处理群组申请消息]{message_id}: ${message_id} {answer}: ${answer} {target_user_id}: ${target_user_id} `
     })

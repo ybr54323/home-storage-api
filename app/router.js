@@ -70,11 +70,22 @@ module.exports = app => {
 
   // group
   router.post('/group', controller.group.createGroup)
-  router.get('/group', controller.group.getGroup)
+
+
+  //group_user
+  router.post('/group_user/join', controller.userGroup.joinGroup)
+
+  router.get('/group_user', controller.userGroup.getGroup)
+
+  // good
+  router.get('/good', controller.good.getGood)
+  router.post('/good', controller.good.createGood)
 
   io.of('/').route('login', io.controller.message.index)
   io.of('/').route('addFriend', io.controller.message.addFriend)
   io.of('/').route('inviteFriend', io.controller.message.inviteFriend)
+  io.of('/').route('permitJoinGroup', io.controller.message.permitJoinGroup)
+  io.of('/').route('rejectJoinGroup', io.controller.message.rejectJoinGroup)
 
 
 };

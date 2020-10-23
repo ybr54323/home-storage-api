@@ -2,87 +2,54 @@
 const BaseController = require('./baseController')
 
 class GoodController extends BaseController {
-  async index() {
+
+  async getGood() {
+    const {ctx: {session: {userInfo: {id}}}} = this
+    const good = await this.ctx.service.good.getGood(id)
+    this.success({
+      data: {good},
+      loggerMsg: `[获取物品]{user_id}: ${id}`
+    })
   }
 
-  async new() {
-  }
-
-  /**
-   * 创建物品
-   */
-  async create() {
+  // 创建物品
+  async createGood() {
+    const {ctx: {session: {userInfo: {id}}}} = this
     const {
       ctx: {
         request: {
           body: {
             name,
-            desc,
-            group_id,
-            img_list
+            des,
+            imgUrls,
+            groupIds
           }
         }
       }
-    } = this;
-    this.ctx.validate({
-      name: {type: 'string', required: true},
-      desc: {type: 'string', required: true},
-      group_id: {type: 'id', required: true},
-    }, {name, desc, group_id})
-
-    const {id} = await this.ctx.service.good.create({
-      user_id: this.ctx.session.userInfo.id,
+    } = this
+    this.ctx.validate({name: {type: 'string', required: true}}, {name})
+    const {insertId} = await this.ctx.service.good.createGood({
       name,
-      desc,
-    });
-    await this.ctx.service.goodGroup.create({
-      good_id: id,
-      group_id,
+      des,
+      owner_user_id: id
     })
-    if (Array.isArray(img_list)) {
-      img_list.forEach(url => {
-        this.ctx.service.imgGood.create({
-          url,
-          good_id: id
-        })
+    // 物品-图片
+    if (imgUrls.length) {
+      await this.ctx.service.goodImg.createGoodImg({
+        good_id: insertId,
+        urls: imgUrls
       })
     }
-    this.success({
-      msg: '创建成功',
-      loggerMsg: `[创建物品成功]\n user_id: ${this.ctx.session.userInfo.id}\n good_id: ${id}`
-    })
+    // 空间-物品
+    if (groupIds.length) {
+      await this.ctx.service.groupGood.createGroupGood({
+        good_id: insertId,
+        group_ids: groupIds
+      })
+    }
+    this.success({msg: '创建物品成功', loggerMsg: `[创建物品]{id}: ${id} {good_id}: ${insertId}`})
   }
 
-  async show() {
-  }
-
-  async edit() {
-  }
-
-  /**
-   * 更新物品的信息
-   */
-  async update() {
-    const {ctx, ctx: {session: {id}, request: {body: {good_info}}}} = this;
-    ctx.validate({id: {type: 'userId', required: true}, good_info: {type: 'jsonString', required: true}}, {
-      id,
-      good_info
-    })
-    const goodInfo = JSON.parse(good_info);
-    // good_name必须有
-    // good_description 为字符串或者为空
-    // file_path 为数组或者为空
-    const {good_id, good_name, good_description, file_list} = goodInfo;
-    ctx.validate({
-      good_id: {type: 'myId', required: true}, good_name: {type: 'string', required: true},
-      good_description: {type: 'string', required: false}, file_list: {type: 'array', required: false}
-    }, {good_id, good_name, good_description, file_list});
-    await ctx.service.good.update({user_id: id, good_id, good_name, good_description, file_list});
-    this.success({good_info: goodInfo}, ctx.SUCCESS_CODE, '添加成功');
-  }
-
-  async destroy() {
-  }
 }
 
 module.exports = GoodController;
