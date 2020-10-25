@@ -81,6 +81,10 @@ module.exports = app => {
   router.get('/good', controller.good.getGood)
   router.post('/good', controller.good.createGood)
 
+  // good detail
+  router.get('/good/detail/:good_id', controller.good.getGoodDetail)
+  router.post('/good/edit', controller.good.editGood)
+
   io.of('/').route('login', io.controller.message.index)
   io.of('/').route('addFriend', io.controller.message.addFriend)
   io.of('/').route('inviteFriend', io.controller.message.inviteFriend)

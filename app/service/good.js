@@ -23,8 +23,29 @@ class GoodService extends Service {
     )
   }
 
+  // 获取物品详情
+  // 暂时的需求就是把所有物品的img列出
+  async getGoodDetail(good_id) {
+    let good_img_urls = await this.app.mysql.query(
+      `
+      select url from good_img where
+      good_id = :good_id and is_delete = 0
+      `,
+      {
+        good_id
+      }
+    )
+    return {
+      good_img_urls
+    }
+  }
+
   async createGood(goodDTO) {
     return await this.app.mysql.insert('good', goodDTO)
+  }
+
+  async editGood(goodDTO) {
+    return await this.app.mysql.update('good', goodDTO)
   }
 }
 
