@@ -73,9 +73,13 @@ module.exports = app => {
 
 
   //group_user
-  router.post('/group_user/join', controller.userGroup.joinGroup)
+  router.post('/group_user/join', controller.groupUser.joinGroup)
+  router.get('/group_user', controller.groupUser.getGroup)
+  router.get('/group_user/:group_id', controller.groupUser.getGroupUser)
 
-  router.get('/group_user', controller.userGroup.getGroup)
+
+  // group good
+  router.get('/group_good/:group_id',controller.groupGood.getGroupGood)
 
   // good
   router.get('/good', controller.good.getGood)
@@ -84,6 +88,7 @@ module.exports = app => {
   // good detail
   router.get('/good/detail/:good_id', controller.good.getGoodDetail)
   router.post('/good/edit', controller.good.editGood)
+
 
   io.of('/').route('login', io.controller.message.index)
   io.of('/').route('addFriend', io.controller.message.addFriend)

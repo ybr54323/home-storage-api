@@ -7,7 +7,7 @@
  * @FilePath: \family-kit-api\app\controller\user.js
  */
 'use strict'
-const {UnExpectError} = require('../error/error')
+const {UnExpectError, RepeatError} = require('../error/error')
 const BaseController = require('./baseController')
 
 class MessageController extends BaseController {
@@ -57,31 +57,44 @@ class MessageController extends BaseController {
   async createFriendMessage() {
     const {ctx: {session: {userInfo: {id}}}} = this
     const {ctx: {request: {body: {target_user_id}}}} = this
-
     this.ctx.validate({target_user_id: {type: 'string', required: true}}, {target_user_id})
-
-    await this.ctx.service.message.create({type: 2, source_user_id: id, target_user_id})
-    this.success({
-      msg: '申请成功',
-      loggerMsg: `[消息][好友申请消息]{source_user_id}: ${id} {target_user_id}: ${target_user_id}`
+    const [message = null] = this.ctx.service.message.checkExist({
+      source_user_id: id,
+      target_user_id
     })
+    if (!message) {
+      await this.ctx.service.message.create({type: 2, source_user_id: id, target_user_id})
+      this.success({
+        msg: '申请成功',
+        loggerMsg: `[消息][好友申请消息]{source_user_id}: ${id} {target_user_id}: ${target_user_id}`
+      })
+    } else {
+      throw new RepeatError({msg: '请不要重复申请'})
+    }
   }
 
   // 创建群组申请信息
   async createGroupMessage() {
     const {ctx: {session: {userInfo: {id}}}} = this
     const {ctx: {request: {body: {target_user_id, group_id}}}} = this
-
     this.ctx.validate({
       target_user_id: {type: 'string', required: true},
       group_id: {type: 'string', required: true}
     }, {target_user_id, group_id})
-
-    await this.ctx.service.message.create({type: 2, source_user_id: id, target_user_id, group_id})
-    this.success({
-      msg: '申请成功',
-      loggerMsg: `[消息][群组申请信息]{source_user_id}: ${id} {target_user_id}: ${target_user_id} {group_id}: ${group_id}`
+    const [message = null] = this.ctx.service.message.checkGroupMessageExist({
+      source_user_id: id,
+      target_user_id
     })
+    if (!message) {
+      await this.ctx.service.message.create({type: 2, source_user_id: id, target_user_id, group_id})
+      this.success({
+        msg: '申请成功',
+        loggerMsg: `[消息][群组申请信息]{source_user_id}: ${id} {target_user_id}: ${target_user_id} {group_id}: ${group_id}`
+      })
+    } else {
+
+    }
+
   }
 
   // 查看聊天信息, 即已读, 一定是以target的身份来查看(已读)
@@ -160,14 +173,14 @@ class MessageController extends BaseController {
       source_user_id: {type: 'string', required: true}
     }, {message_id, answer, group_id, source_user_id})
     if (answer === 1) {
-      const [exist = null] = await this.ctx.service.userGroup.find({
+      const [exist = null] = await this.ctx.service.groupUser.find({
         group_id,
         source_user_id,
         target_user_id,
         is_delete: 0
       })
       if (!exist) {
-        await this.ctx.service.userGroup.create({
+        await this.ctx.service.groupUser.create({
           group_id,
           source_user_id,
           target_user_id,

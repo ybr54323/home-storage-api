@@ -136,10 +136,10 @@ module.exports = appInfo => {
       ignoreJSON: true,
       headerName: 'x-csrf-token',// 自定义请求头
     },
-    domainWhiteList: ['http://localhost:8080']
+    domainWhiteList: ['http://localhost:8080', 'http://localhost:8081']
   }
   config.cors = {
-    origin: 'http://localhost:8080',
+    origin: 'http://localhost:8081',
     allowMethods: 'GET,HEAD,PUT,POST,DELETE,PATCH',
     credentials: true
   }

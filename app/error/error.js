@@ -36,11 +36,19 @@ class ResourceNoExistError extends HError {
   }
 }
 
+// 重复错误
+class RepeatError extends HError {
+  constructor({errCode = 405, msg = '', loggerMsg = ''} = {}) {
+    super({errCode, msg, loggerMsg})
+  }
+}
+
 
 module.exports = {
   ParamsError,
   NoLoginError,
   UnExpectError,
   CodeTimeoutError,
-  ResourceNoExistError
+  ResourceNoExistError,
+  RepeatError
 }

@@ -7,30 +7,44 @@
  * @FilePath: \family-kit-api\app\controller\user.js
  */
 'use strict'
-const BaseController = require('./baseController')
 const {UnExpectError} = require('../error/error')
+const BaseController = require('./baseController')
 
-class GroupController extends BaseController {
 
-  async addFriend() {
-    const {ctx: {request: {body: {source_user_id, target_user_id}}}} = this
+class GroupUserController extends BaseController {
+
+  async getGroup() {
+    const {ctx: {session: {userInfo: {id}}}} = this
+    const group = await this.ctx.service.groupUser.getGroup(id)
+    this.success({data: {group}, loggerMsg: `[获取用户所在群组]{user_id}: ${id}`})
+  }
+
+  async joinGroup() {
+    const {ctx: {session: {userInfo: {id}}}} = this
+    const {ctx: {request: {body: {group_id, source_user_id}}}} = this
     this.ctx.validate({
-      type: {type: 'number', required: true},
-      source_user_id: {type: 'id', required: true}, target_user_id: {type: 'id', required: true}
-    }, {source_user_id, target_user_id})
-
-    await this.ctx.service.message.create({
+      group_id: {type: 'string', required: true},
+      source_user_id: {type: 'string', required: true}
+    }, {group_id, source_user_id})
+    await this.ctx.service.groupUser.create({
+      id: group_id,
       source_user_id,
-      target_user_id,
-      type: 2,
-      is_read: 0
+      target_user_id: id
     })
     this.success({
-      msg: '发送成功',
-      loggerMsg: `[新信息]\n source_user_id: ${source_user_id}\n target_user_id: ${target_user_id}`
+      msg: '加入成功',
+      loggerMsg: `[加入群组成功]{group_id}: ${group_id} {target_user_id}: ${id} {source_user_id}: ${source_user_id}`
     })
   }
 
+  // 群组下的用户
+  async getGroupUser() {
+    const {ctx: {session: {userInfo: {id}}}} = this
+    const {ctx: {params: {group_id}}} = this
+    this.ctx.validate({group_id: {type: 'string', required: true}}, {group_id})
+    const users = await this.ctx.service.groupUser.getGroupUser(group_id)
+    this.success({data: {users}, loggerMsg: `[获取群组下的用户]{id}: ${id} {group_id}: ${group_id}`})
+  }
 
   // async handle() {
   //   const {ctx: {request: {body: {message_id, answer}}}} = this
@@ -65,4 +79,4 @@ class GroupController extends BaseController {
   // }
 }
 
-module.exports = GroupController;
+module.exports = GroupUserController;

@@ -24,6 +24,21 @@ class GroupGoodService extends Service {
     })
     return await this.app.mysql.query(sql, [values])
   }
+
+  async getGroupGood(group_id) {
+    return await this.app.mysql.query(
+      `
+      select g.id, g.name, g.des,
+      (select url from good_img where good_id = g.id and is_delete = 0 limit 1) as good_img_url
+      from good as g
+      where g.id in
+      (select good_id from group_good where group_id = :group_id and is_delete = 0)
+      and g.is_delete = 0 
+      `, {
+        group_id
+      }
+    )
+  }
 }
 
 module.exports = GroupGoodService;

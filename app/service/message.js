@@ -3,39 +3,6 @@ const Service = require('egg').Service;
 
 class MessageService extends Service {
 
-  // 获取聊天消息
-  // 发起人和接收人
-  // async getAllMessage(user_id) {
-  //   const chatMessage = await this.getChatMessage(user_id)
-  //   const friendMessage = []
-  //   const groupMessage = []
-  //
-  //   const allMessage = await this.app.mysql.query(
-  //     `
-  //     select m.*,
-  //     (select url from user_avatar where user_id = m.source_user_id and is_active = 1 and is_delete = 0) as source_user_avatar_url,
-  //     (select name from user where id = m.source_user_id) as source_user_name
-  //     from message as m
-  //     where m.target_user_id = :user_id and m.target_user_is_delete = 0 and m.is_delete = 0
-  //     limit 100
-  //     `, {
-  //       user_id
-  //     }
-  //   )
-  //
-  //   allMessage.forEach(message => {
-  //     const {type} = message
-  //     const messages = type === 1 ? chatMessage : type === 2 ? friendMessage : groupMessage
-  //     messages.push(message)
-  //   })
-  //
-  //   return {
-  //     chatMessage,
-  //     friendMessage,
-  //     groupMessage
-  //   }
-  // }
-
   // 获取聊天信息
   async getChatMessage(user_id) {
 
@@ -207,6 +174,28 @@ class MessageService extends Service {
   // 更新消息
   async update(messageDTO) {
     return await this.app.mysql.update('message', messageDTO)
+  }
+
+  // 查看好友申请消息是否已存在
+  async checkFriendMessageExist(messageDTO) {
+    return await this.app.mysql.select('message', {
+      where: {
+        ...messageDTO,
+        type: 2,
+        answer: 0 // answer 为0，即待处理
+      }
+    })
+  }
+
+  // 查看群组邀请申请消息是否已存在
+  async checkGroupMessageExist(messageDTO) {
+    return await this.app.mysql.select('message', {
+      where: {
+        ...messageDTO,
+        type: 3,
+        answer: 0 // answer 为0，即待处理
+      }
+    })
   }
 }
 
