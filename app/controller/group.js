@@ -8,7 +8,7 @@
  */
 'use strict'
 const BaseController = require('./baseController')
-const {UnExpectError} = require('../error/error')
+const {UnExpectError, PermissionDeniedError} = require('../error/error')
 
 class GroupController extends BaseController {
   async createGroup() {
@@ -17,8 +17,8 @@ class GroupController extends BaseController {
     this.ctx.validate({name: {required: true, type: 'string'}}, {name})
     const {insertId: groupInsertId} = await this.ctx.service.group.create({owner_user_id: id, name, desc})
     if (avatarUrl) {
-      const {gAInsertId} = await this.ctx.service.groupAvatar.create({url: avatarUrl, group_id: groupInsertId,})
-      await this.ctx.service.group.update({id: groupInsertId, avatar_id: gAInsertId})
+      await this.ctx.service.groupAvatar.create({url: avatarUrl, group_id: groupInsertId})
+      console.log('avatarUrl', avatarUrl)
     }
     if (friendIds.length) {
       await this.ctx.service.message.batchCreateGroupMessage({
@@ -28,7 +28,7 @@ class GroupController extends BaseController {
       })
       this.app.logger.info(`[创建群组消息]{group_id}: ${groupInsertId} {source_user_id}: ${id} {target_user_ids}: ${friendIds}`)
     }
-    this.success({msg: '创建成功', loggerMsg: `[群组][创建成功]{name}: ${name} {owner_user_id}: ${id}`})
+    this.success({msg: '创建成功', loggerMsg: `[群组创建成功]{name}: ${name} {owner_user_id}: ${id}`})
   }
 
   async getGroup() {
@@ -38,39 +38,21 @@ class GroupController extends BaseController {
   }
 
 
+  async delGroup() {
+    const {ctx: {session: {userInfo: {id}}}} = this
+    const {ctx: {params: {group_id}}} = this
+    this.ctx.validate({group_id: {type: 'string', required: true}}, {group_id})
+    const {affectedRows} = await this.ctx.service.group.delGroup({user_id: id, group_id})
+    if (affectedRows) {
+      this.success({msg: '删除成功', loggerMsg: `[群组删除成功]{id}: ${id} {group_id}: ${group_id}`})
+      return
+    }
+    throw new PermissionDeniedError({
+      msg: '删除失败，可能并没删除该群组的权限',
+      loggerMsg: `[群组删除失败]{id}: ${id} {group_id}: ${group_id}`
+    });
+  }
 
-
-  // async handle() {
-  //   const {ctx: {request: {body: {message_id, answer}}}} = this
-  //   await this.ctx.service.message.update({
-  //     id: message_id,
-  //     answer
-  //   })
-  //   const [message = null] = await this.ctx.service.message.find(message_id)
-  //   if (message === null) {
-  //     throw new UnExpectError()
-  //   }
-  //   let loggerMsg, msg
-  //   switch (answer) {
-  //     case 0:
-  //       msg = '拒绝成功'
-  //       loggerMsg = `[好友申请拒绝]\n target_user_id: ${this.ctx.session.userInfo.id}`
-  //       break
-  //     case 1:
-  //       await this.ctx.service.friend.create({
-  //         source_user_id: message.source_user_id,
-  //         target_user_id: message.target_user_id,
-  //         is_delete: 0
-  //       })
-  //       msg = '通过成功'
-  //       loggerMsg = `[好友申请通过]\n target_user_id: ${this.ctx.session.userInfo.id}`
-  //       break
-  //   }
-  //   this.success({
-  //     msg,
-  //     loggerMsg
-  //   })
-  // }
 }
 
 module.exports = GroupController;

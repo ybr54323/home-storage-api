@@ -70,6 +70,8 @@ module.exports = app => {
 
   // group
   router.post('/group', controller.group.createGroup)
+  // 删除群组
+  router.delete('/group/:group_id', controller.group.delGroup)
 
 
   //group_user

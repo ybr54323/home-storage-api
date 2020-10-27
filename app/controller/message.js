@@ -120,7 +120,7 @@ class MessageController extends BaseController {
     const {ctx: {session: {userInfo: {id}}}} = this
     await this.ctx.service.message.viewGroupMessage(id)
     this.success({
-      loggerMsg: `[消息][更新消息已读状态]{target_user_id}: ${id}`
+      loggerMsg: `[更新消息已读状态]{target_user_id}: ${id}`
     })
   }
 

@@ -11,6 +11,7 @@ class GroupUserService extends Service {
       from my_group as g
       where g.id in 
       (select group_id from group_user where is_delete = 0 and source_user_id = :user_id or target_user_id = :user_id)
+      or g.owner_user_id = :user_id 
       and g.is_delete = 0
       `,
       {user_id}

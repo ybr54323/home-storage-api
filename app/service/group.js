@@ -38,6 +38,18 @@ class GroupService extends Service {
   async update(groupDTO) {
     return await this.app.mysql.update('my_group', groupDTO)
   }
+
+  // 删除群组
+  async delGroup({
+                   group_id, user_id
+                 }) {
+    return await this.app.mysql.query(
+      `update my_group set is_delete = 1 where id = :group_id and owner_user_id = :user_id limit 1`, {
+        group_id,
+        user_id
+      }
+    )
+  }
 }
 
 module.exports = GroupService;

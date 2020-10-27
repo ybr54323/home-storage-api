@@ -43,6 +43,12 @@ class RepeatError extends HError {
   }
 }
 
+// 没权限
+class PermissionDeniedError extends HError {
+  constructor({errCode = 406, msg = '', loggerMsg = ''} = {}) {
+    super({errCode, msg, loggerMsg})
+  }
+}
 
 module.exports = {
   ParamsError,

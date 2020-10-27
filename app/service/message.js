@@ -120,7 +120,6 @@ class MessageService extends Service {
   // 查看群组申请信息
   async viewGroupMessage(target_user_id) {
     return await this.batchUpdate({type: 3, target_user_id})
-
   }
 
   // 处理聊天信息

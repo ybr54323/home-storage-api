@@ -86,11 +86,15 @@ module.exports = appInfo => {
       password: mysqlPassword,
       // 数据库名
       database: mysqlDataBase, // 数据库名
+      connectionLimit: 1000,
+      connectTimeout: 60 * 60 * 1000,
+      acquireTimeout: 60 * 60 * 1000,
+      timeout: 60 * 60 * 1000,
     },
     // 是否加载到 app 上，默认开启
     app: true,
     // 是否加载到 agent 上，默认关闭
-    agent: false
+    agent: false,
   }
   config.redis = {
     client: {
