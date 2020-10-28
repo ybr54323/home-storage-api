@@ -1,7 +1,23 @@
 'use strict'
 const BaseController = require('./baseController')
+const {PermissionDeniedError} = require('../error/error')
 
 class GoodController extends BaseController {
+
+  async delGood() {
+    const {ctx: {session: {userInfo: {id: owner_user_id}}}} = this
+    const {ctx: {params: {good_id}}} = this
+    this.ctx.validate({owner_user_id: {type: 'string', required: true}}, {owner_user_id})
+    const {affectedRows} = await this.ctx.service.good.delGood({owner_user_id, good_id})
+    if (affectedRows) {
+      this.success({msg: '删除物品成功', loggerMsg: `[删除物品成功]{id}: ${owner_user_id} {good_id}: ${good_id}`})
+    } else {
+      throw new PermissionDeniedError({
+        msg: '删除物品失败',
+        loggerMsg: `[删除物品成功]{id}: ${owner_user_id} {good_id}: ${good_id}`
+      })
+    }
+  }
 
   async getGood() {
     const {ctx: {session: {userInfo: {id}}}} = this

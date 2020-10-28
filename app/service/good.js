@@ -47,6 +47,14 @@ class GoodService extends Service {
   async editGood(goodDTO) {
     return await this.app.mysql.update('good', goodDTO)
   }
+
+  async delGood({owner_user_id, good_id}) {
+    return await this.app.mysql.update('good', {
+      owner_user_id,
+      id: good_id,
+      is_delete: 1
+    })
+  }
 }
 
 module.exports = GoodService;

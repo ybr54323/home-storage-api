@@ -86,6 +86,7 @@ module.exports = app => {
   // good
   router.get('/good', controller.good.getGood)
   router.post('/good', controller.good.createGood)
+  router.delete('/good/:good_id', controller.good.delGood)
 
   // good detail
   router.get('/good/detail/:good_id', controller.good.getGoodDetail)
